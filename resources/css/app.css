@@ -1,0 +1,231 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+
+@theme inline {
+    --font-sans:
+        Instrument Sans, ui-sans-serif, system-ui, sans-serif,
+        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+        'Noto Color Emoji';
+
+    --color-canvas: var(--canvas);
+    --color-surface: var(--surface);
+    --color-surface-raised: var(--surface-raised);
+    --color-surface-muted: var(--surface-muted);
+    --color-field: var(--field);
+    --color-line: var(--line);
+    --color-ink: var(--ink);
+    --color-ink-soft: var(--ink-soft);
+    --color-ink-muted: var(--ink-muted);
+    --color-brand: var(--brand);
+    --color-brand-hi: var(--brand-hi);
+    --color-brand-strong: var(--brand-strong);
+    --color-brand-soft: var(--brand-soft);
+    --color-on-brand: var(--on-brand);
+    --color-danger: var(--danger);
+    --color-danger-hi: var(--danger-hi);
+    --color-danger-soft: var(--danger-soft);
+    --color-on-danger: var(--on-danger);
+    --color-warning: var(--warning);
+    --color-warning-soft: var(--warning-soft);
+    --color-chart: var(--chart);
+    --color-chart-muted: var(--chart-muted);
+
+    --shadow-card: var(--card-shadow);
+    --shadow-glow: var(--brand-glow);
+
+    --radius-xl: 0.875rem;
+    --radius-2xl: 1.25rem;
+    --radius-3xl: 1.75rem;
+}
+
+/*
+ * "Liquid glass" palette. Surfaces are translucent over a soft colour field (body::before),
+ * floating chrome (sidebar, bars, sheets) uses the blurred `glass` utilities below.
+ *
+ * <html data-theme> holds the user's choice (light / dark / system, see useAppearance) and the
+ * inline script in app.blade.php resolves it into data-scheme, so dark colours live in one place.
+ */
+:root {
+    --canvas: #eef2f6;
+    --canvas-glow:
+        radial-gradient(
+            60rem 42rem at 0% 0%,
+            rgb(20 184 166 / 0.2),
+            transparent 60%
+        ),
+        radial-gradient(
+            52rem 38rem at 100% 0%,
+            rgb(56 189 248 / 0.16),
+            transparent 62%
+        ),
+        radial-gradient(
+            64rem 44rem at 60% 110%,
+            rgb(167 139 250 / 0.14),
+            transparent 60%
+        );
+    --surface: rgb(255 255 255 / 0.66);
+    --surface-raised: #ffffff;
+    --surface-muted: rgb(15 23 42 / 0.05);
+    --field: rgb(255 255 255 / 0.78);
+    --line: rgb(15 23 42 / 0.09);
+    --ink: #0b1220;
+    --ink-soft: #445066;
+    --ink-muted: #7a8598;
+    --brand: #0f766e;
+    --brand-hi: #14a394;
+    --brand-strong: #115e59;
+    --brand-soft: rgb(15 118 110 / 0.11);
+    --on-brand: #ffffff;
+    --danger: #c2410c;
+    --danger-hi: #ea580c;
+    --danger-soft: rgb(194 65 12 / 0.1);
+    --on-danger: #ffffff;
+    --warning: #a16207;
+    --warning-soft: rgb(161 98 7 / 0.11);
+    --chart: #0f766e;
+    --chart-muted: rgb(15 118 110 / 0.18);
+    --glass: rgb(255 255 255 / 0.55);
+    --glass-strong: rgb(255 255 255 / 0.8);
+    --glass-shadow:
+        inset 0 1px 0 rgb(255 255 255 / 0.85),
+        inset 0 0 0 1px rgb(255 255 255 / 0.45), 0 0 0 1px rgb(15 23 42 / 0.06),
+        0 14px 36px -14px rgb(15 23 42 / 0.22);
+    --card-shadow:
+        inset 0 1px 0 rgb(255 255 255 / 0.75), 0 1px 2px rgb(15 23 42 / 0.04),
+        0 10px 28px -18px rgb(15 23 42 / 0.2);
+    --brand-glow:
+        inset 0 1px 0 rgb(255 255 255 / 0.28),
+        0 8px 20px -8px rgb(15 118 110 / 0.55);
+    --tabbar-bottom: max(0.75rem, calc(env(safe-area-inset-bottom) - 0.25rem));
+    --tabbar-clearance: calc(var(--tabbar-bottom) + 4.75rem);
+    color-scheme: light;
+}
+
+:root[data-scheme='dark'] {
+    --canvas: #070a0e;
+    --canvas-glow:
+        radial-gradient(
+            60rem 42rem at 0% 0%,
+            rgb(20 184 166 / 0.2),
+            transparent 60%
+        ),
+        radial-gradient(
+            52rem 38rem at 100% 0%,
+            rgb(59 130 246 / 0.16),
+            transparent 62%
+        ),
+        radial-gradient(
+            64rem 44rem at 60% 110%,
+            rgb(139 92 246 / 0.16),
+            transparent 60%
+        );
+    --surface: rgb(30 37 47 / 0.55);
+    --surface-raised: rgb(255 255 255 / 0.13);
+    --surface-muted: rgb(255 255 255 / 0.06);
+    --field: rgb(0 0 0 / 0.22);
+    --line: rgb(255 255 255 / 0.09);
+    --ink: #f1f4f7;
+    --ink-soft: #b8c0cb;
+    --ink-muted: #828c99;
+    --brand: #2bb3a3;
+    --brand-hi: #45d1c0;
+    --brand-strong: #5ad6c7;
+    --brand-soft: rgb(43 179 163 / 0.16);
+    --on-brand: #04201c;
+    --danger: #f59572;
+    --danger-hi: #f8ae92;
+    --danger-soft: rgb(245 149 114 / 0.14);
+    --on-danger: #1f0d06;
+    --warning: #e7bd5b;
+    --warning-soft: rgb(231 189 91 / 0.14);
+    --chart: #2bb3a3;
+    --chart-muted: rgb(43 179 163 / 0.2);
+    --glass: rgb(28 34 44 / 0.55);
+    --glass-strong: rgb(22 27 35 / 0.84);
+    --glass-shadow:
+        inset 0 1px 0 rgb(255 255 255 / 0.12),
+        inset 0 0 0 1px rgb(255 255 255 / 0.07),
+        0 18px 44px -14px rgb(0 0 0 / 0.65);
+    --card-shadow:
+        inset 0 1px 0 rgb(255 255 255 / 0.06),
+        0 12px 32px -20px rgb(0 0 0 / 0.8);
+    --brand-glow:
+        inset 0 1px 0 rgb(255 255 255 / 0.3),
+        0 8px 22px -8px rgb(43 179 163 / 0.5);
+    color-scheme: dark;
+}
+
+/* Browsers without backdrop blur, and users who ask for less transparency, get solid surfaces. */
+@supports not
+((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    :root {
+        --glass: var(--glass-strong);
+    }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+    :root {
+        --surface: #ffffff;
+        --glass: #ffffff;
+        --glass-strong: #ffffff;
+    }
+
+    :root[data-scheme='dark'] {
+        --surface: #161b22;
+        --glass: #161b22;
+        --glass-strong: #161b22;
+    }
+}
+
+@layer base {
+    body {
+        @apply bg-canvas text-ink transition-colors;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Fixed colour field behind everything; a pseudo-element because iOS ignores fixed backgrounds. */
+    body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        pointer-events: none;
+        background: var(--canvas-glow);
+    }
+
+    ::selection {
+        background-color: var(--brand-soft);
+    }
+
+    input[type='number']::-webkit-inner-spin-button,
+    input[type='number']::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+}
+
+/* Floating chrome: sidebar, top / tab bars. */
+@utility glass {
+    background-color: var(--glass);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    backdrop-filter: blur(24px) saturate(180%);
+    box-shadow: var(--glass-shadow);
+}
+
+/* Glass that carries reading content: sheets, dialogs, menus, toasts. */
+@utility glass-strong {
+    background-color: var(--glass-strong);
+    -webkit-backdrop-filter: blur(32px) saturate(180%);
+    backdrop-filter: blur(32px) saturate(180%);
+    box-shadow: var(--glass-shadow);
+}
+
+@utility pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+@utility pt-safe {
+    padding-top: env(safe-area-inset-top);
+}
