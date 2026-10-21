@@ -11,7 +11,8 @@ use Illuminate\Support\Str;
 use Throwable;
 
 /**
- * Delivers a logged SMS. The payload is encrypted because the variables may carry a verification code.
+ * Delivers a logged SMS. SmsService runs it synchronously; if it is ever queued, the payload is
+ * encrypted because the variables may carry a verification code.
  */
 class SendSmsJob implements ShouldBeEncrypted, ShouldQueue
 {

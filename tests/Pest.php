@@ -1,7 +1,9 @@
 <?php
 
 use App\Models\Plan;
+use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\Factory;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
@@ -56,7 +58,8 @@ function plan(string $slug): Plan
 }
 
 /**
- * Send SMS through a faked USMS API. Queued jobs run synchronously in tests, so codes are "sent" at once.
+ * Send SMS through a faked USMS API. Each call starts a fresh fake, so a test can replace the
+ * successful defaults that a beforeEach() already registered.
  *
  * @param  array<string, mixed>  $stubs  Responses that replace the successful defaults, keyed by URL.
  */
@@ -69,6 +72,7 @@ function fakeUsms(array $stubs = []): void
         'sms.usms.templates' => ['registration' => 43, 'password_reset' => 43, 'debt_reminder' => 44],
     ]);
 
+    Http::swap(new Factory(app(Dispatcher::class)));
     Http::preventStrayRequests();
     Http::fake([
         'usms.uz/api/v1/send' => Http::response(['id' => '1001', 'parts' => 1, 'price' => 160, 'status' => 'sent']),

@@ -5,6 +5,7 @@ use App\Enums\SmsStatus;
 use App\Models\SmsMessage;
 use App\Models\User;
 use Illuminate\Http\Client\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 
 beforeEach(fn () => fakeUsms());
@@ -26,6 +27,29 @@ it('texts a registration code through USMS and logs the delivery', function () {
         ->and($message->purpose)->toBe(SmsPurpose::Registration)
         ->and($message->status)->toBe(SmsStatus::Sent)
         ->and($message->provider_message_id)->toBe('1001');
+});
+
+it('texts the code right away even when the app queues jobs', function () {
+    config(['queue.default' => 'database']);
+
+    $this->postJson(route('register.code'), ['phone' => '901234567'])->assertOk();
+
+    Http::assertSentCount(1);
+    expect(SmsMessage::query()->sole()->status)->toBe(SmsStatus::Sent)
+        ->and(DB::table('jobs')->count())->toBe(0);
+});
+
+it('tells the person when the SMS could not be sent and lets them retry at once', function () {
+    fakeUsms(['usms.uz/api/v1/send' => Http::response(['error' => 'Недостаточно средств'], 402)]);
+
+    $first = $this->postJson(route('register.code'), ['phone' => '901234567']);
+    $retry = $this->postJson(route('register.code'), ['phone' => '901234567']);
+
+    $first->assertJsonValidationErrors(['phone' => "SMS yuborib bo'lmadi. Birozdan so'ng qayta urinib ko'ring."]);
+    $retry->assertJsonValidationErrors(['phone' => "SMS yuborib bo'lmadi. Birozdan so'ng qayta urinib ko'ring."]);
+    Http::assertSentCount(2);
+    expect(SmsMessage::query()->pluck('status')->all())->toBe([SmsStatus::Failed, SmsStatus::Failed])
+        ->and(SmsMessage::query()->first()->error)->toBe('USMS xatosi (HTTP 402): Недостаточно средств');
 });
 
 it('does not text a registration code to a registered phone', function () {

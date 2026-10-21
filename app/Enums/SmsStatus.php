@@ -11,7 +11,7 @@ enum SmsStatus: string
     public function label(): string
     {
         return match ($this) {
-            self::Pending => 'Navbatda',
+            self::Pending => 'Yuborilmoqda',
             self::Sent => 'Yuborildi',
             self::Failed => 'Xatolik',
         };

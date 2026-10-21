@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\SmsPurpose;
+use App\Exceptions\SmsGatewayException;
 use Illuminate\Container\Attributes\Config;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Date;
@@ -48,7 +49,17 @@ class VerificationCodeService
             'expires_at' => now()->addSeconds($this->ttl)->getTimestamp(),
         ], $this->ttl);
 
-        $this->sms->send($phone, $purpose, ['code' => $code]);
+        try {
+            $this->sms->send($phone, $purpose, ['code' => $code]);
+        } catch (SmsGatewayException $exception) {
+            // The code never arrived, so it must not block an immediate retry.
+            Cache::forget($key);
+            report($exception);
+
+            throw ValidationException::withMessages([
+                'phone' => "SMS yuborib bo'lmadi. Birozdan so'ng qayta urinib ko'ring.",
+            ]);
+        }
 
         return $this->resendAfter;
     }

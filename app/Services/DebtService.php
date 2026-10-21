@@ -6,6 +6,7 @@ use App\DTOs\DebtData;
 use App\Enums\DebtStatus;
 use App\Enums\PlanFeature;
 use App\Enums\SmsPurpose;
+use App\Exceptions\SmsGatewayException;
 use App\Models\Customer;
 use App\Models\Debt;
 use App\Models\Sale;
@@ -93,7 +94,9 @@ class DebtService
      * SMS every customer whose debt is due today, once per debt. Shops whose subscription
      * has ended or whose plan has no debt book are skipped.
      *
-     * @return int Number of reminders queued.
+     * A reminder the provider rejects is logged as failed and skipped; the rest still go out.
+     *
+     * @return int Number of reminders sent.
      */
     public function sendDueReminders(): int
     {
@@ -106,11 +109,17 @@ class DebtService
                 continue;
             }
 
-            $this->sms->send($debt->customer->phone, SmsPurpose::DebtReminder, [
-                'name' => $debt->customer->name,
-                'shop' => $debt->shop->name,
-                'amount' => number_format($debt->remaining(), 0, '.', ' '),
-            ]);
+            try {
+                $this->sms->send($debt->customer->phone, SmsPurpose::DebtReminder, [
+                    'name' => $debt->customer->name,
+                    'shop' => $debt->shop->name,
+                    'amount' => number_format($debt->remaining(), 0, '.', ' '),
+                ]);
+            } catch (SmsGatewayException $exception) {
+                report($exception);
+
+                continue;
+            }
 
             $this->debts->markReminded($debt);
             $sent++;

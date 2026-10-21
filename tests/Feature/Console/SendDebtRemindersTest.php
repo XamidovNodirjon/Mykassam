@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\SmsPurpose;
+use App\Enums\SmsStatus;
 use App\Models\Customer;
 use App\Models\Debt;
 use App\Models\Shop;
@@ -24,6 +25,22 @@ it('reminds customers whose debt is due today, once', function () {
         && $request['params'] === ['name' => 'Aziza', 'shop' => 'Chilonzor Market', 'amount' => '100 000']);
     expect(SmsMessage::query()->sole()->purpose)->toBe(SmsPurpose::DebtReminder)
         ->and($debt->fresh()->reminded_at)->not->toBeNull();
+});
+
+it('keeps sending the other reminders when one is rejected', function () {
+    fakeUsms(['usms.uz/api/v1/send' => Http::sequence()
+        ->push(['error' => 'Недостаточно средств'], 402)
+        ->push(['id' => '1002', 'status' => 'sent'])]);
+    $shop = Shop::factory()->create();
+    foreach (['998935554433', '998935554434'] as $phone) {
+        $customer = Customer::factory()->for($shop)->create(['phone' => $phone]);
+        Debt::factory()->for($customer)->dueToday()->create(['shop_id' => $shop->id]);
+    }
+
+    $this->artisan('debts:remind')->expectsOutputToContain('Eslatmalar yuborildi: 1 ta.')->assertSuccessful();
+
+    expect(SmsMessage::query()->pluck('status')->all())->toBe([SmsStatus::Failed, SmsStatus::Sent])
+        ->and(Debt::query()->whereNotNull('reminded_at')->count())->toBe(1);
 });
 
 it('skips paid debts, other days and shops without the debt book', function () {

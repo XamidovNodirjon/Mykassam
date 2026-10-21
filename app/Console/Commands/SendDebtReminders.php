@@ -13,7 +13,7 @@ class SendDebtReminders extends Command
 {
     public function handle(DebtService $debts): int
     {
-        $this->info("Eslatmalar navbatga qo'yildi: {$debts->sendDueReminders()} ta.");
+        $this->info("Eslatmalar yuborildi: {$debts->sendDueReminders()} ta.");
 
         return self::SUCCESS;
     }

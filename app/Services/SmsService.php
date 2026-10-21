@@ -19,9 +19,13 @@ class SmsService
     ) {}
 
     /**
-     * Log the message and queue its delivery so the request is not blocked by the provider.
+     * Log the message and deliver it right away, without waiting for a queue worker: a person
+     * waiting for a code needs it now, and shared hosting runs no worker. The log entry is marked
+     * sent or failed before this returns.
      *
      * @param  array<string, string>  $params  Template variables.
+     *
+     * @throws SmsGatewayException When the provider does not accept the message.
      */
     public function send(string $phone, SmsPurpose $purpose, array $params): void
     {
@@ -31,7 +35,7 @@ class SmsService
             'status' => SmsStatus::Pending,
         ]);
 
-        SendSmsJob::dispatch($message, $params);
+        SendSmsJob::dispatchSync($message, $params);
     }
 
     /**
