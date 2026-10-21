@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\SmsPurpose;
 use App\Enums\SmsStatus;
+use App\Exceptions\BusinessException;
 use App\Exceptions\SmsGatewayException;
 use App\Jobs\SendSmsJob;
 use App\Models\SmsMessage;
@@ -28,10 +29,30 @@ class SmsService
         $message = $this->messages->create([
             'phone' => $phone,
             'purpose' => $purpose,
+            // A verification code is never stored; it is resent by issuing a new one.
+            'params' => $purpose->isVerificationCode() ? null : $params,
             'status' => SmsStatus::Pending,
         ]);
 
         SendSmsJob::dispatch($message, $params);
+    }
+
+    /**
+     * Queue an undelivered message again with its stored variables.
+     *
+     * @throws BusinessException When the message cannot be resent.
+     */
+    public function resend(SmsMessage $message): void
+    {
+        $reason = $message->resendBlockedReason();
+
+        if ($reason !== null || $message->params === null) {
+            throw new BusinessException($reason ?? "Bu SMS'ni qayta yuborib bo'lmaydi.");
+        }
+
+        $message->update(['status' => SmsStatus::Pending, 'error' => null]);
+
+        SendSmsJob::dispatch($message, $message->params);
     }
 
     /**
@@ -51,16 +72,18 @@ class SmsService
     }
 
     /**
-     * Provider balance in UZS, or null when it is unavailable.
+     * Provider balance in UZS. When it cannot be read, the amount is null and the error says why.
+     *
+     * @return array{amount: int|null, error: string|null}
      */
-    public function balance(): ?int
+    public function balance(): array
     {
         try {
-            return $this->gateway->balance();
+            return ['amount' => $this->gateway->balance(), 'error' => null];
         } catch (SmsGatewayException $exception) {
             report($exception);
 
-            return null;
+            return ['amount' => null, 'error' => $exception->getMessage()];
         }
     }
 }

@@ -19,7 +19,7 @@ class SmsController extends Controller
             'messages' => SmsMessageResource::collection($sms->paginate($search)),
             'summary' => $sms->summary(),
             // Calls the provider API, so it loads after the page renders.
-            'balance' => Inertia::defer(fn (): ?int => $sms->balance()),
+            'balance' => Inertia::defer(fn (): array => $sms->balance()),
             'isLive' => config('sms.driver') === 'usms',
             'filters' => ['search' => $search],
         ]);

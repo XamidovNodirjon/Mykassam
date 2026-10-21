@@ -72,6 +72,10 @@ class UsmsGateway implements SmsGatewayInterface
             throw new SmsGatewayException("USMS serveriga ulanib bo'lmadi.", previous: $exception);
         }
 
+        if ($response->unauthorized()) {
+            throw new SmsGatewayException('USMS login yoki maxfiy kalitni qabul qilmadi (HTTP 401). .env dagi USMS_LOGIN va USMS_SECRET ni tekshiring.');
+        }
+
         if ($response->failed()) {
             $error = $response->json('error');
 

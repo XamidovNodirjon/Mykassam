@@ -48,6 +48,7 @@ Route::middleware(['auth', 'active'])->group(function (): void {
         Route::patch('shops/{shop}/status', [Admin\ShopController::class, 'toggleStatus'])->name('shops.status');
 
         Route::get('sms', Admin\SmsController::class)->name('sms.index');
+        Route::post('sms/{smsMessage}/resend', Admin\SmsResendController::class)->name('sms.resend');
 
         Route::prefix('subscriptions')->group(function (): void {
             Route::resource('plans', Admin\PlanController::class)->only(['index', 'store', 'update']);

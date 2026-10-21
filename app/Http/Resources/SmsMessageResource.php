@@ -23,6 +23,7 @@ class SmsMessageResource extends JsonResource
             'status' => $this->status->value,
             'status_label' => $this->status->label(),
             'error' => $this->error,
+            'can_resend' => $this->resendBlockedReason() === null,
             'created_at' => $this->created_at?->toIso8601String(),
         ];
     }

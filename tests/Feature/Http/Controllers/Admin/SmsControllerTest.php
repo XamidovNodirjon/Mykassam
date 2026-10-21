@@ -18,7 +18,7 @@ it('shows sent SMS and loads the USMS balance after the page renders', function 
         ->where('summary', ['total' => 3, 'today' => 3, 'failed' => 1])
         ->where('isLive', true)
         ->missing('balance')
-        ->loadDeferredProps(fn (AssertableInertia $reload) => $reload->where('balance', 100000)));
+        ->loadDeferredProps(fn (AssertableInertia $reload) => $reload->where('balance', ['amount' => 100000, 'error' => null])));
 
     Http::assertSent(fn ($request): bool => $request->url() === 'https://usms.uz/api/v1/balance');
 });
@@ -43,7 +43,19 @@ it('shows an unknown balance instead of failing when USMS is unreachable', funct
     $response = $this->actingAs(User::factory()->admin()->create())->get(route('admin.sms.index'));
 
     $response->assertInertia(fn (AssertableInertia $page) => $page
-        ->loadDeferredProps(fn (AssertableInertia $reload) => $reload->where('balance', null)));
+        ->loadDeferredProps(fn (AssertableInertia $reload) => $reload
+            ->where('balance', ['amount' => null, 'error' => "USMS serveriga ulanib bo'lmadi."])));
+});
+
+it('tells the admin when USMS rejects the login and secret', function () {
+    fakeUsms(['usms.uz/api/v1/balance' => Http::response(['error' => 'Authorization: Bearer login:secret'], 401)]);
+
+    $response = $this->actingAs(User::factory()->admin()->create())->get(route('admin.sms.index'));
+
+    $response->assertInertia(fn (AssertableInertia $page) => $page
+        ->loadDeferredProps(fn (AssertableInertia $reload) => $reload
+            ->where('balance.amount', null)
+            ->where('balance.error', fn (string $error): bool => str_contains($error, 'HTTP 401'))));
 });
 
 it('is not available to owners', function () {

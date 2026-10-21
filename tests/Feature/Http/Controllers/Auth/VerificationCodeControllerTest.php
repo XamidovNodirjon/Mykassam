@@ -12,7 +12,7 @@ beforeEach(fn () => fakeUsms());
 it('texts a registration code through USMS and logs the delivery', function () {
     $response = $this->postJson(route('register.code'), ['phone' => '+998 (90) 123-45-67']);
 
-    $response->assertOk()->assertJsonPath('data.resend_after', 60);
+    $response->assertOk()->assertJsonPath('data.resend_after', 120);
 
     Http::assertSent(fn (Request $request): bool => $request->url() === 'https://usms.uz/api/v1/send'
         && $request->hasHeader('Authorization', 'Bearer test-login:test-secret')

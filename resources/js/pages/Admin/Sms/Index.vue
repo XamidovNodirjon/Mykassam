@@ -15,12 +15,13 @@ import {
     formatNumber,
     formatPhone,
 } from '@/lib/format';
+import { resend } from '@/routes/admin/sms';
 import type { Paginated, SmsMessage } from '@/types';
 
 defineProps<{
     messages: Paginated<SmsMessage>;
     summary: { total: number; today: number; failed: number };
-    balance?: number | null;
+    balance?: { amount: number | null; error: string | null };
     isLive: boolean;
     filters: { search: string | null };
 }>();
@@ -38,6 +39,16 @@ function refreshBalance(): void {
         only: ['balance'],
         onStart: () => (refreshingBalance.value = true),
         onFinish: () => (refreshingBalance.value = false),
+    });
+}
+
+const resendingId = ref<number | null>(null);
+
+function resendMessage(message: SmsMessage): void {
+    router.visit(resend(message.id), {
+        preserveScroll: true,
+        onStart: () => (resendingId.value = message.id),
+        onFinish: () => (resendingId.value = null),
     });
 }
 </script>
@@ -82,7 +93,12 @@ function refreshBalance(): void {
             <StatCard
                 highlight
                 label="USMS balans"
-                :value="balance == null ? 'Aniqlanmadi' : formatMoney(balance)"
+                :value="
+                    balance?.amount == null
+                        ? 'Aniqlanmadi'
+                        : formatMoney(balance.amount)
+                "
+                :hint="balance?.error ?? undefined"
                 icon="wallet"
             />
         </Deferred>
@@ -138,9 +154,22 @@ function refreshBalance(): void {
                     {{ message.error }}
                 </p>
             </div>
-            <StatusBadge :tone="statusTone[message.status]">
-                {{ message.status_label }}
-            </StatusBadge>
+            <div class="flex shrink-0 flex-col items-end gap-2">
+                <StatusBadge :tone="statusTone[message.status]">
+                    {{ message.status_label }}
+                </StatusBadge>
+                <AppButton
+                    v-if="message.can_resend"
+                    variant="secondary"
+                    size="sm"
+                    icon="refresh"
+                    :loading="resendingId === message.id"
+                    :disabled="resendingId !== null"
+                    @click="resendMessage(message)"
+                >
+                    Qayta yuborish
+                </AppButton>
+            </div>
         </li>
     </ul>
 

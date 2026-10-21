@@ -8,6 +8,15 @@ enum SmsPurpose: string
     case PasswordReset = 'password_reset';
     case DebtReminder = 'debt_reminder';
 
+    /**
+     * Messages that carry a one-time code. The code is never stored, so such a message is
+     * "resent" by issuing a new code.
+     */
+    public function isVerificationCode(): bool
+    {
+        return $this !== self::DebtReminder;
+    }
+
     public function label(): string
     {
         return match ($this) {

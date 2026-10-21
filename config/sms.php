@@ -41,7 +41,7 @@ return [
     'verification' => [
         'length' => 6,
         'ttl' => 300,
-        'resend_after' => 60,
+        'resend_after' => 120,
         'max_attempts' => 5,
     ],
 
