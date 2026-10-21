@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, router, usePage } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import AppIcon from '@/components/AppIcon.vue';
 import AppLogo from '@/components/AppLogo.vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
@@ -8,6 +8,7 @@ import SubscriptionNotice from '@/components/SubscriptionNotice.vue';
 import ThemeToggle from '@/components/ThemeToggle.vue';
 import ToastHost from '@/components/ToastHost.vue';
 import { useConfirm } from '@/composables/useConfirm';
+import { usePageEnter } from '@/composables/usePageEnter';
 import { activeHref, navigationFor } from '@/layouts/navigation';
 import { logout } from '@/routes';
 
@@ -17,6 +18,46 @@ const confirm = useConfirm();
 const user = computed(() => page.props.auth.user);
 const items = computed(() => navigationFor(user.value?.role));
 const active = computed(() => activeHref(items.value, page.url));
+const activeIndex = computed(() =>
+    items.value.findIndex((item) => item.href === active.value),
+);
+
+const main = ref<HTMLElement | null>(null);
+usePageEnter(main);
+
+/**
+ * The highlight behind the active sidebar link is one element that slides between links.
+ * It is measured from the link, and again when the sidebar appears (it is hidden on phones).
+ */
+const sidebarNav = ref<HTMLElement | null>(null);
+const sidebarPill = ref<{ top: number; height: number } | null>(null);
+const sidebarPillAnimated = ref(false);
+let sidebarObserver: ResizeObserver | undefined;
+
+function placeSidebarPill(): void {
+    const link = sidebarNav.value?.querySelector<HTMLElement>(
+        '[aria-current="page"]',
+    );
+
+    sidebarPill.value =
+        link && link.offsetHeight > 0
+            ? { top: link.offsetTop, height: link.offsetHeight }
+            : null;
+}
+
+watch(active, placeSidebarPill, { flush: 'post' });
+
+onMounted(() => {
+    placeSidebarPill();
+    requestAnimationFrame(() => (sidebarPillAnimated.value = true));
+
+    if (sidebarNav.value) {
+        sidebarObserver = new ResizeObserver(placeSidebarPill);
+        sidebarObserver.observe(sidebarNav.value);
+    }
+});
+
+onBeforeUnmount(() => sidebarObserver?.disconnect());
 
 const subtitle = computed(() =>
     user.value?.role === 'seller' && user.value.shop
@@ -47,18 +88,33 @@ async function signOut(): Promise<void> {
                     <AppLogo />
                 </div>
                 <nav
-                    class="flex flex-1 flex-col gap-1 overflow-y-auto px-3"
+                    ref="sidebarNav"
+                    class="relative flex flex-1 flex-col gap-1 overflow-y-auto px-3"
                     aria-label="Asosiy"
                 >
+                    <span
+                        v-if="sidebarPill"
+                        class="absolute inset-x-3 top-0 rounded-2xl bg-surface-raised shadow-card"
+                        :class="
+                            sidebarPillAnimated
+                                ? 'transition-[translate,height] duration-400 ease-spring'
+                                : ''
+                        "
+                        :style="{
+                            translate: `0 ${sidebarPill.top}px`,
+                            height: `${sidebarPill.height}px`,
+                        }"
+                        aria-hidden="true"
+                    />
                     <Link
                         v-for="item in items"
                         :key="item.href"
                         :href="item.href"
                         prefetch
-                        class="flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition duration-200"
+                        class="relative flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition duration-200"
                         :class="
                             active === item.href
-                                ? 'bg-surface-raised font-semibold text-brand-strong shadow-card'
+                                ? 'font-semibold text-brand-strong'
                                 : 'text-ink-soft hover:bg-surface-muted hover:text-ink'
                         "
                         :aria-current="
@@ -66,10 +122,10 @@ async function signOut(): Promise<void> {
                         "
                     >
                         <span
-                            class="flex size-8 items-center justify-center rounded-xl transition"
+                            class="flex size-8 items-center justify-center rounded-xl transition duration-300"
                             :class="
                                 active === item.href
-                                    ? 'bg-linear-to-b from-brand-hi to-brand text-on-brand shadow-glow'
+                                    ? 'scale-105 bg-linear-to-b from-brand-hi to-brand text-on-brand shadow-glow'
                                     : 'bg-surface-muted'
                             "
                         >
@@ -145,6 +201,7 @@ async function signOut(): Promise<void> {
             </header>
 
             <main
+                ref="main"
                 class="mx-auto w-full max-w-6xl flex-1 px-4 pt-4 pb-[calc(var(--tabbar-clearance)+1.5rem)] sm:px-6 lg:px-8 lg:pt-8 lg:pb-12"
             >
                 <SubscriptionNotice />
@@ -158,25 +215,43 @@ async function signOut(): Promise<void> {
             aria-label="Asosiy"
         >
             <div
-                class="grid"
+                class="relative grid"
                 :style="{
                     gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))`,
                 }"
             >
+                <span
+                    v-if="activeIndex >= 0"
+                    class="absolute inset-y-0 left-0 rounded-full bg-brand-soft transition-transform duration-400 ease-spring"
+                    :style="{
+                        width: `${100 / items.length}%`,
+                        transform: `translateX(${activeIndex * 100}%)`,
+                    }"
+                    aria-hidden="true"
+                />
                 <Link
                     v-for="item in items"
                     :key="item.href"
                     :href="item.href"
                     prefetch
-                    class="flex min-w-0 flex-col items-center gap-0.5 rounded-full px-1 py-1.5 text-[10px] font-medium transition duration-200 active:scale-95"
+                    class="relative flex min-w-0 flex-col items-center gap-0.5 rounded-full px-1 py-1.5 text-[10px] font-medium transition duration-200 active:scale-95"
                     :class="
                         active === item.href
-                            ? 'bg-brand-soft text-brand-strong'
+                            ? 'text-brand-strong'
                             : 'text-ink-muted'
                     "
                     :aria-current="active === item.href ? 'page' : undefined"
                 >
-                    <AppIcon :name="item.icon" :size="22" />
+                    <AppIcon
+                        :name="item.icon"
+                        :size="22"
+                        class="transition-transform duration-300 ease-spring"
+                        :class="
+                            active === item.href
+                                ? '-translate-y-px scale-110'
+                                : ''
+                        "
+                    />
                     <span class="w-full truncate text-center">
                         {{ item.label }}
                     </span>

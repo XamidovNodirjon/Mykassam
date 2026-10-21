@@ -1,7 +1,12 @@
 <script setup lang="ts">
+import { ref } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
 import ThemeToggle from '@/components/ThemeToggle.vue';
 import ToastHost from '@/components/ToastHost.vue';
+import { usePageEnter } from '@/composables/usePageEnter';
+
+const content = ref<HTMLElement | null>(null);
+usePageEnter(content);
 </script>
 
 <template>
@@ -13,7 +18,7 @@ import ToastHost from '@/components/ToastHost.vue';
         >
             <ThemeToggle compact />
         </div>
-        <div class="w-full max-w-sm">
+        <div ref="content" class="w-full max-w-sm">
             <div class="mb-8 flex justify-center">
                 <AppLogo />
             </div>

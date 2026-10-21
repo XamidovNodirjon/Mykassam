@@ -3,6 +3,7 @@
 use App\Models\Shop;
 use App\Models\User;
 use Database\Seeders\AdminSeeder;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Testing\AssertableInertia;
 
 it('signs the seeded administrator in with admin / admin123', function () {
@@ -29,6 +30,19 @@ it('signs an owner in with a formatted phone number', function () {
     ]);
 
     $response->assertRedirect(route('owner.dashboard'));
+    $this->assertAuthenticatedAs($owner);
+});
+
+it('does not keep the user signed in beyond the session with a remember-me cookie', function () {
+    $owner = User::factory()->owner()->create();
+
+    $response = $this->post(route('login.store'), [
+        'login' => $owner->login,
+        'password' => 'password',
+        'remember' => true,
+    ]);
+
+    $response->assertCookieMissing(Auth::guard('web')->getRecallerName());
     $this->assertAuthenticatedAs($owner);
 });
 

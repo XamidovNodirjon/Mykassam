@@ -11,7 +11,6 @@ import { store } from '@/routes/login';
 const form = useForm({
     login: '',
     password: '',
-    remember: true,
 });
 
 const forgotPasswordOpen = ref(false);
@@ -54,15 +53,7 @@ function onPasswordReset(phone: string): void {
                 autocomplete="current-password"
                 :error="form.errors.password"
             />
-            <div class="flex items-center justify-between gap-3">
-                <label class="flex items-center gap-2 text-sm text-ink-soft">
-                    <input
-                        v-model="form.remember"
-                        type="checkbox"
-                        class="size-4 rounded accent-brand"
-                    />
-                    Meni eslab qol
-                </label>
+            <div class="flex justify-end">
                 <button
                     type="button"
                     class="text-sm font-medium text-brand hover:text-brand-strong"

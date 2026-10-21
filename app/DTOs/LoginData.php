@@ -9,7 +9,6 @@ final readonly class LoginData
     public function __construct(
         public string $login,
         public string $password,
-        public bool $remember,
     ) {}
 
     public static function fromRequest(LoginRequest $request): self
@@ -17,7 +16,6 @@ final readonly class LoginData
         return new self(
             login: $request->string('login')->toString(),
             password: $request->string('password')->toString(),
-            remember: $request->boolean('remember'),
         );
     }
 }

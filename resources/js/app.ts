@@ -18,6 +18,6 @@ void createInertiaApp({
         });
     },
     progress: {
-        color: '#0f766e',
+        color: 'var(--brand)',
     },
 });

@@ -38,6 +38,16 @@
     --radius-xl: 0.875rem;
     --radius-2xl: 1.25rem;
     --radius-3xl: 1.75rem;
+
+    --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
+
+    --animate-grow-up: grow-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+
+    @keyframes grow-up {
+        from {
+            transform: scaleY(0);
+        }
+    }
 }
 
 /*
@@ -98,6 +108,7 @@
     --brand-glow:
         inset 0 1px 0 rgb(255 255 255 / 0.28),
         0 8px 20px -8px rgb(15 118 110 / 0.55);
+    --backdrop: rgb(15 23 42 / 0.3);
     --tabbar-bottom: max(0.75rem, calc(env(safe-area-inset-bottom) - 0.25rem));
     --tabbar-clearance: calc(var(--tabbar-bottom) + 4.75rem);
     color-scheme: light;
@@ -154,6 +165,7 @@
     --brand-glow:
         inset 0 1px 0 rgb(255 255 255 / 0.3),
         0 8px 22px -8px rgb(43 179 163 / 0.5);
+    --backdrop: rgb(0 0 0 / 0.55);
     color-scheme: dark;
 }
 
@@ -174,6 +186,7 @@
 
     :root[data-scheme='dark'] {
         --surface: #161b22;
+        --surface-raised: #222831;
         --glass: #161b22;
         --glass-strong: #161b22;
     }
@@ -193,6 +206,13 @@
         z-index: -1;
         pointer-events: none;
         background: var(--canvas-glow);
+    }
+
+    /* Native dropdown lists don't inherit translucent field colours; give them solid ones. */
+    option,
+    optgroup {
+        background-color: var(--canvas);
+        color: var(--ink);
     }
 
     ::selection {
@@ -228,4 +248,31 @@
 
 @utility pt-safe {
     padding-top: env(safe-area-inset-top);
+}
+
+/*
+ * Theme switch (see useAppearance). Transitions are paused while the theme flips so every surface
+ * changes at once instead of each at its own transition speed; where supported, the new theme is
+ * revealed as a circle growing from the toggle. The toggle itself (data-keep-motion) still animates.
+ */
+:root[data-theme-switching] :not([data-keep-motion], [data-keep-motion] *),
+:root[data-theme-switching] ::before,
+:root[data-theme-switching] ::after {
+    transition: none !important;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+    animation: none;
+    mix-blend-mode: normal;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
 }

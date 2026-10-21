@@ -16,7 +16,7 @@ withDefaults(
 
 <template>
     <div
-        class="flex flex-col gap-2 rounded-2xl border p-4"
+        class="flex flex-col gap-2 rounded-2xl border p-4 transition duration-300 ease-spring hover:-translate-y-0.5"
         :class="
             highlight
                 ? 'border-transparent bg-linear-to-b from-brand-hi to-brand text-on-brand shadow-glow'

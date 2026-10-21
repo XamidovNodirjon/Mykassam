@@ -20,7 +20,6 @@ class LoginRequest extends FormRequest
         return [
             'login' => ['required', 'string', 'max:50'],
             'password' => ['required', 'string', 'max:255'],
-            'remember' => ['boolean'],
         ];
     }
 

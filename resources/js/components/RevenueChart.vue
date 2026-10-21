@@ -141,14 +141,17 @@ function barHeight(point: DailyPoint): string {
                         "
                     >
                         <span
-                            class="w-full rounded-t-[4px] transition-colors"
+                            class="w-full origin-bottom animate-grow-up rounded-t-[4px] transition-[background-color,height] duration-500 ease-spring"
                             :class="
                                 selectedIndex === null ||
                                 selectedIndex === index
                                     ? 'bg-chart'
                                     : 'bg-chart-muted'
                             "
-                            :style="{ height: barHeight(point) }"
+                            :style="{
+                                height: barHeight(point),
+                                animationDelay: `${index * 12}ms`,
+                            }"
                         />
                     </button>
                 </div>

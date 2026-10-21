@@ -23,6 +23,8 @@ class AuthService
 
     /**
      * Sign in with a login or phone number. Owners use their phone number as login.
+     * There is no "remember me": the sign-in lasts as long as the session, which ends after
+     * `session.lifetime` minutes without activity, so a shared till asks for the password again.
      *
      * @throws ValidationException
      */
@@ -42,7 +44,7 @@ class AuthService
             ]);
         }
 
-        Auth::login($user, $data->remember);
+        Auth::login($user);
 
         return $user;
     }

@@ -39,10 +39,11 @@ onBeforeUnmount(() => stopListening?.());
         aria-live="polite"
     >
         <TransitionGroup
-            enter-active-class="transition duration-200"
-            enter-from-class="-translate-y-3 scale-95 opacity-0 sm:translate-y-3"
-            leave-active-class="transition duration-150"
-            leave-to-class="opacity-0"
+            enter-active-class="transition duration-400 ease-spring"
+            enter-from-class="-translate-y-4 scale-90 opacity-0 sm:translate-x-8 sm:translate-y-0"
+            leave-active-class="transition duration-200 ease-in"
+            leave-to-class="scale-95 opacity-0 sm:translate-x-8"
+            move-class="transition duration-300 ease-spring"
         >
             <div
                 v-for="toast in toasts"

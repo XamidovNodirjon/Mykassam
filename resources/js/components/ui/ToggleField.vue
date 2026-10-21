@@ -30,10 +30,10 @@ const id = useId();
                 class="peer sr-only"
             />
             <span
-                class="h-7 w-12 rounded-full bg-ink-muted/30 transition peer-checked:bg-brand peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-brand"
+                class="h-7 w-12 rounded-full bg-ink-muted/30 transition duration-300 peer-checked:bg-brand peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-brand"
             />
             <span
-                class="absolute top-1 left-1 size-5 rounded-full bg-white shadow-md transition peer-checked:translate-x-5"
+                class="absolute top-1 left-1 size-5 rounded-full bg-white shadow-md transition duration-300 ease-spring peer-checked:translate-x-5 peer-active:w-6 peer-checked:peer-active:translate-x-4"
             />
         </span>
     </label>

@@ -47,21 +47,21 @@ onBeforeUnmount(() => {
 <template>
     <Teleport to="body">
         <Transition
-            enter-active-class="transition duration-300 ease-out"
+            enter-active-class="transition duration-400 ease-spring"
             enter-from-class="opacity-0 [&>[role=dialog]]:translate-y-8 sm:[&>[role=dialog]]:translate-y-0 sm:[&>[role=dialog]]:scale-95"
             leave-active-class="transition duration-200 ease-in"
             leave-to-class="opacity-0 [&>[role=dialog]]:translate-y-8 sm:[&>[role=dialog]]:translate-y-0 sm:[&>[role=dialog]]:scale-95"
         >
             <div
                 v-if="open"
-                class="fixed inset-0 z-50 flex items-end justify-center bg-black/30 backdrop-blur-[2px] sm:items-center sm:p-4"
+                class="fixed inset-0 z-50 flex items-end justify-center bg-(--backdrop) backdrop-blur-[2px] sm:items-center sm:p-4"
                 @click.self="close"
             >
                 <div
                     role="dialog"
                     aria-modal="true"
                     :aria-label="props.title"
-                    class="glass-strong pb-safe max-h-[92dvh] w-full overflow-y-auto rounded-t-[2rem] transition duration-300 ease-out sm:max-w-lg sm:rounded-[2rem]"
+                    class="glass-strong pb-safe max-h-[92dvh] w-full overflow-y-auto rounded-t-[2rem] transition duration-400 ease-spring sm:max-w-lg sm:rounded-[2rem]"
                 >
                     <div
                         class="mx-auto mt-2 h-1.5 w-10 rounded-full bg-ink-muted/30 sm:hidden"
