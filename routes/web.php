@@ -41,6 +41,8 @@ Route::middleware(['auth', 'active'])->group(function (): void {
 
         Route::resource('shop-types', Admin\ShopTypeController::class)->only(['index', 'store', 'update', 'destroy']);
 
+        Route::get('users', [Admin\UserController::class, 'index'])->name('users.index');
+
         Route::get('owners', [Admin\OwnerController::class, 'index'])->name('owners.index');
         Route::patch('owners/{owner}/status', [Admin\OwnerController::class, 'toggleStatus'])->name('owners.status');
 

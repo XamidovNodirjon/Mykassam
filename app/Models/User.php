@@ -34,6 +34,7 @@ use Illuminate\Support\Carbon;
  * @property-read int|string|null $revenue Aggregate selected with withSum().
  * @property-read int|string|null $profit Aggregate selected with withSum().
  * @property-read int|string|null $sales_count Aggregate selected with withCount().
+ * @property-read int|string|null $last_seen_at Unix time of the latest session request, selected by the admin user list.
  */
 #[Fillable(['first_name', 'last_name', 'phone', 'login', 'password', 'role', 'is_active', 'shop_id'])]
 #[Hidden(['password', 'remember_token'])]

@@ -15,7 +15,6 @@ import {
     formatNumber,
     formatPhone,
 } from '@/lib/format';
-import { resend } from '@/routes/admin/sms';
 import type { Paginated, SmsMessage } from '@/types';
 
 defineProps<{
@@ -39,16 +38,6 @@ function refreshBalance(): void {
         only: ['balance'],
         onStart: () => (refreshingBalance.value = true),
         onFinish: () => (refreshingBalance.value = false),
-    });
-}
-
-const resendingId = ref<number | null>(null);
-
-function resendMessage(message: SmsMessage): void {
-    router.visit(resend(message.id), {
-        preserveScroll: true,
-        onStart: () => (resendingId.value = message.id),
-        onFinish: () => (resendingId.value = null),
     });
 }
 </script>
@@ -154,22 +143,9 @@ function resendMessage(message: SmsMessage): void {
                     {{ message.error }}
                 </p>
             </div>
-            <div class="flex shrink-0 flex-col items-end gap-2">
-                <StatusBadge :tone="statusTone[message.status]">
-                    {{ message.status_label }}
-                </StatusBadge>
-                <AppButton
-                    v-if="message.can_resend"
-                    variant="secondary"
-                    size="sm"
-                    icon="refresh"
-                    :loading="resendingId === message.id"
-                    :disabled="resendingId !== null"
-                    @click="resendMessage(message)"
-                >
-                    Qayta yuborish
-                </AppButton>
-            </div>
+            <StatusBadge :tone="statusTone[message.status]">
+                {{ message.status_label }}
+            </StatusBadge>
         </li>
     </ul>
 

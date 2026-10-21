@@ -5,6 +5,7 @@ import { index as shopTypesIndex } from '@/routes/admin/shop-types';
 import { index as adminShopsIndex } from '@/routes/admin/shops';
 import { index as smsIndex } from '@/routes/admin/sms';
 import { index as subscriptionsIndex } from '@/routes/admin/subscriptions';
+import { index as usersIndex } from '@/routes/admin/users';
 import { dashboard as ownerDashboard } from '@/routes/owner';
 import { index as ownerSalesIndex } from '@/routes/owner/sales';
 import { index as ownerShopsIndex } from '@/routes/owner/shops';
@@ -33,7 +34,12 @@ export function navigationFor(role: UserRole | undefined): NavItem[] {
                     icon: 'chart',
                     exact: true,
                 },
-                { label: 'Egalar', href: ownersIndex.url(), icon: 'users' },
+                {
+                    label: 'Foydalanuvchilar',
+                    href: usersIndex.url(),
+                    icon: 'users',
+                },
+                { label: 'Egalar', href: ownersIndex.url(), icon: 'user' },
                 {
                     label: "Do'konlar",
                     href: adminShopsIndex.url(),

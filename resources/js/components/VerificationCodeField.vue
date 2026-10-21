@@ -1,11 +1,14 @@
 <script setup lang="ts">
+import { computed } from 'vue';
+import AppButton from '@/components/ui/AppButton.vue';
 import TextField from '@/components/ui/TextField.vue';
 import { formatPhone } from '@/lib/format';
 
 /**
- * SMS code input with the destination number and a resend countdown.
+ * SMS code input with the destination number and a resend button that counts down until
+ * another code may be requested.
  */
-defineProps<{
+const props = defineProps<{
     phone: string;
     resendIn: number;
     sending?: boolean;
@@ -18,6 +21,13 @@ defineEmits<{
 }>();
 
 const code = defineModel<string>({ default: '' });
+
+const countdown = computed(() => {
+    const minutes = Math.floor(props.resendIn / 60);
+    const seconds = String(props.resendIn % 60).padStart(2, '0');
+
+    return `${minutes}:${seconds}`;
+});
 </script>
 
 <template>
@@ -42,17 +52,22 @@ const code = defineModel<string>({ default: '' });
             autofocus
             :error="error"
         />
-        <button
-            type="button"
-            class="self-start text-sm font-medium text-brand hover:text-brand-strong disabled:text-ink-muted"
-            :disabled="resendIn > 0 || sending"
+        <AppButton
+            variant="secondary"
+            icon="refresh"
+            block
+            :loading="sending"
+            :disabled="resendIn > 0"
             @click="$emit('resend')"
         >
-            {{
-                resendIn > 0
-                    ? `Qayta yuborish: ${resendIn} soniya`
-                    : 'Kodni qayta yuborish'
-            }}
-        </button>
+            <template v-if="resendIn > 0">
+                SMS'ni qayta yuborish
+                <span class="tabular-nums">({{ countdown }})</span>
+            </template>
+            <template v-else>SMS'ni qayta yuborish</template>
+        </AppButton>
+        <p v-if="resendIn > 0" class="-mt-1 text-center text-xs text-ink-muted">
+            SMS kelmasa, {{ countdown }} dan keyin qayta yuborishingiz mumkin.
+        </p>
     </div>
 </template>

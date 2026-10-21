@@ -9,6 +9,7 @@ use App\Repositories\Contracts\UserRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 
 class UserRepository implements UserRepositoryInterface
 {
@@ -85,6 +86,50 @@ class UserRepository implements UserRepositoryInterface
     public function countByRole(UserRole $role): int
     {
         return User::query()->ofRole($role)->count();
+    }
+
+    public function paginateAll(?string $search, ?UserRole $role, int $perPage = 20): LengthAwarePaginator
+    {
+        return User::query()
+            ->with(['shop:id,name,owner_id', 'shop.owner:id,first_name,last_name'])
+            ->withCount(['shops', 'sales'])
+            ->addSelect([
+                'last_seen_at' => DB::table('sessions')
+                    ->selectRaw('max(last_activity)')
+                    ->whereColumn('sessions.user_id', 'users.id'),
+            ])
+            ->when($role, fn (Builder $query, UserRole $role) => $query->ofRole($role))
+            ->when($search, function (Builder $query, string $search): void {
+                $query->where(function (Builder $query) use ($search): void {
+                    $query->where('first_name', 'like', "%{$search}%")
+                        ->orWhere('last_name', 'like', "%{$search}%")
+                        ->orWhere('phone', 'like', "%{$search}%")
+                        ->orWhere('login', 'like', "%{$search}%");
+                });
+            })
+            ->orderByDesc('id')
+            ->paginate($perPage)
+            ->withQueryString();
+    }
+
+    public function summary(int $onlineWithinSeconds): array
+    {
+        $byRole = User::query()->toBase()
+            ->selectRaw('role, count(*) as aggregate')
+            ->groupBy('role')
+            ->pluck('aggregate', 'role');
+
+        return [
+            'total' => (int) $byRole->sum(),
+            'owners' => (int) ($byRole[UserRole::Owner->value] ?? 0),
+            'sellers' => (int) ($byRole[UserRole::Seller->value] ?? 0),
+            'blocked' => User::query()->where('is_active', false)->count(),
+            'online' => DB::table('sessions')
+                ->whereNotNull('user_id')
+                ->where('last_activity', '>=', now()->subSeconds($onlineWithinSeconds)->getTimestamp())
+                ->distinct()
+                ->count('user_id'),
+        ];
     }
 
     public function countSellersOfShop(Shop $shop): int

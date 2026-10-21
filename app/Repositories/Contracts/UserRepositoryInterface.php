@@ -46,5 +46,17 @@ interface UserRepositoryInterface
 
     public function countByRole(UserRole $role): int;
 
+    /**
+     * Every account, newest first, with its shop, counts and the time of its latest request.
+     *
+     * @return LengthAwarePaginator<int, User>
+     */
+    public function paginateAll(?string $search, ?UserRole $role, int $perPage = 20): LengthAwarePaginator;
+
+    /**
+     * @return array{total: int, owners: int, sellers: int, blocked: int, online: int}
+     */
+    public function summary(int $onlineWithinSeconds): array;
+
     public function countSellersOfShop(Shop $shop): int;
 }
