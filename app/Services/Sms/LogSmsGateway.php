@@ -2,7 +2,9 @@
 
 namespace App\Services\Sms;
 
+use App\DTOs\SmsDeliveryReport;
 use App\Enums\SmsPurpose;
+use App\Enums\SmsStatus;
 use App\Services\Contracts\SmsGatewayInterface;
 use Illuminate\Support\Facades\Log;
 
@@ -16,6 +18,11 @@ class LogSmsGateway implements SmsGatewayInterface
         Log::info("[SMS] {$purpose->label()} {$phone}", $params);
 
         return null;
+    }
+
+    public function deliveryReport(string $providerMessageId): SmsDeliveryReport
+    {
+        return new SmsDeliveryReport(SmsStatus::Delivered);
     }
 
     public function balance(): ?int

@@ -2,7 +2,9 @@
 
 namespace App\Services\Sms;
 
+use App\DTOs\SmsDeliveryReport;
 use App\Enums\SmsPurpose;
+use App\Enums\SmsStatus;
 use App\Exceptions\SmsGatewayException;
 use App\Services\Contracts\SmsGatewayInterface;
 use Closure;
@@ -35,17 +37,38 @@ class UsmsGateway implements SmsGatewayInterface
             throw new SmsGatewayException("\"{$purpose->label()}\" uchun USMS shabloni sozlanmagan.");
         }
 
-        $response = $this->call(fn (PendingRequest $request): Response => $request->post('send', [
+        // Without "from" USMS picks an approved sender name itself.
+        $response = $this->call(fn (PendingRequest $request): Response => $request->post('send', array_filter([
             'phone' => $phone,
             'template_id' => $templateId,
             'params' => $params,
             'from' => $this->from,
             'idem_key' => $idempotencyKey,
-        ]));
+        ], fn (mixed $value): bool => $value !== '')));
 
         $id = $response->json('id');
 
         return $id === null ? null : (string) $id;
+    }
+
+    /**
+     * "delivered" and "failed" are final; "rejected" means the operator refused it (refunded).
+     * Anything else ("queued", "sent", "unknown") is still waiting for the operator.
+     */
+    public function deliveryReport(string $providerMessageId): SmsDeliveryReport
+    {
+        $response = $this->call(fn (PendingRequest $request): Response => $request->get('status/'.rawurlencode($providerMessageId)));
+
+        $note = $response->json('status_note');
+
+        return new SmsDeliveryReport(
+            status: match ($response->json('status')) {
+                'delivered' => SmsStatus::Delivered,
+                'failed', 'rejected' => SmsStatus::Failed,
+                default => SmsStatus::Sent,
+            },
+            note: is_string($note) && $note !== '' ? $note : null,
+        );
     }
 
     public function balance(): ?int

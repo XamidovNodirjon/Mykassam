@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\SmsStatus;
 use App\Models\SmsMessage;
 use App\Models\User;
 use Illuminate\Support\Facades\Http;
@@ -62,4 +63,16 @@ it('is not available to owners', function () {
     $this->actingAs(User::factory()->owner()->create())
         ->get(route('admin.sms.index'))
         ->assertForbidden();
+});
+
+it('lets the admin refresh delivery reports from the SMS page', function () {
+    fakeUsms();
+    $message = SmsMessage::factory()->create(['status' => SmsStatus::Sent, 'provider_message_id' => '1001']);
+
+    $response = $this->actingAs(User::factory()->admin()->create())
+        ->from(route('admin.sms.index'))
+        ->post(route('admin.sms.sync'));
+
+    $response->assertRedirect(route('admin.sms.index'));
+    expect($message->refresh()->status)->toBe(SmsStatus::Delivered);
 });

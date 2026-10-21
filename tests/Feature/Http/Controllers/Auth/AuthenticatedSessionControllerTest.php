@@ -6,12 +6,12 @@ use Database\Seeders\AdminSeeder;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Testing\AssertableInertia;
 
-it('signs the seeded administrator in with admin / admin123', function () {
+it('signs the seeded administrator in with developer / password', function () {
     $this->seed(AdminSeeder::class);
 
     $response = $this->post(route('login.store'), [
-        'login' => 'admin',
-        'password' => 'admin123',
+        'login' => 'developer',
+        'password' => 'password',
     ]);
 
     $response->assertRedirect(route('admin.dashboard'));

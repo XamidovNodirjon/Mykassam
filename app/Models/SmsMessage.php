@@ -51,6 +51,11 @@ class SmsMessage extends Model
         ]);
     }
 
+    public function markAsDelivered(): void
+    {
+        $this->update(['status' => SmsStatus::Delivered, 'error' => null]);
+    }
+
     public function markAsFailed(string $error): void
     {
         $this->update([

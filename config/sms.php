@@ -18,7 +18,8 @@ return [
         'base_url' => env('USMS_BASE_URL', 'https://usms.uz/api/v1'),
         'login' => env('USMS_LOGIN', ''),
         'secret' => env('USMS_SECRET', ''),
-        'from' => env('USMS_FROM', '4546'),
+        // Approved sender name; leave empty to let USMS choose one.
+        'from' => (string) env('USMS_FROM', ''),
         // Approved template id per message purpose (see App\Enums\SmsPurpose).
         'templates' => [
             // Variables: {code}. E.g. "SmartPOS tasdiqlash kodi: {code}".

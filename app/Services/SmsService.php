@@ -5,23 +5,32 @@ namespace App\Services;
 use App\Enums\SmsPurpose;
 use App\Enums\SmsStatus;
 use App\Exceptions\SmsGatewayException;
-use App\Jobs\SendSmsJob;
 use App\Models\SmsMessage;
 use App\Repositories\Contracts\SmsMessageRepositoryInterface;
 use App\Services\Contracts\SmsGatewayInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Str;
 
 class SmsService
 {
+    /**
+     * Delivery reports are only looked up for messages sent within this many hours.
+     */
+    private const DELIVERY_REPORT_WINDOW_HOURS = 72;
+
+    /**
+     * At most this many messages are checked per sync, to keep it quick.
+     */
+    private const DELIVERY_REPORT_BATCH = 50;
+
     public function __construct(
         private SmsMessageRepositoryInterface $messages,
         private SmsGatewayInterface $gateway,
     ) {}
 
     /**
-     * Log the message and deliver it right away, without waiting for a queue worker: a person
-     * waiting for a code needs it now, and shared hosting runs no worker. The log entry is marked
-     * sent or failed before this returns.
+     * Log the message and hand it to the provider right away: a person waiting for a code needs
+     * it now. The log entry ends up "sent" (accepted, delivery not yet confirmed) or "failed".
      *
      * @param  array<string, string>  $params  Template variables.
      *
@@ -35,7 +44,47 @@ class SmsService
             'status' => SmsStatus::Pending,
         ]);
 
-        SendSmsJob::dispatchSync($message, $params);
+        try {
+            $message->markAsSent($this->gateway->send($phone, $purpose, $params, (string) Str::uuid()));
+        } catch (SmsGatewayException $exception) {
+            $message->markAsFailed($exception->getMessage());
+
+            throw $exception;
+        }
+    }
+
+    /**
+     * Ask the provider whether recently sent messages reached the phone and record the outcome.
+     *
+     * @return int Number of messages whose status changed.
+     */
+    public function syncDeliveryReports(): int
+    {
+        $changed = 0;
+        $pending = $this->messages->awaitingDeliveryReport(
+            now()->subHours(self::DELIVERY_REPORT_WINDOW_HOURS),
+            self::DELIVERY_REPORT_BATCH,
+        );
+
+        foreach ($pending as $message) {
+            try {
+                $report = $this->gateway->deliveryReport((string) $message->provider_message_id);
+            } catch (SmsGatewayException $exception) {
+                report($exception);
+
+                continue;
+            }
+
+            if ($report->status === SmsStatus::Delivered) {
+                $message->markAsDelivered();
+                $changed++;
+            } elseif ($report->status === SmsStatus::Failed) {
+                $message->markAsFailed('Operator yetkazmadi'.($report->note !== null ? ": {$report->note}" : '.'));
+                $changed++;
+            }
+        }
+
+        return $changed;
     }
 
     /**

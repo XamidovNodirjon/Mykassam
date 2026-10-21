@@ -9,3 +9,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('debts:remind')->dailyAt('10:00')->withoutOverlapping();
+Schedule::command('sms:sync-delivery')->everyMinute()->withoutOverlapping();

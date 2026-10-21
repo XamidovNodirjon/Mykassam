@@ -74,10 +74,11 @@ function fakeUsms(array $stubs = []): void
 
     Http::swap(new Factory(app(Dispatcher::class)));
     Http::preventStrayRequests();
-    Http::fake([
+    // Stubs come first so a specific URL wins over the wildcard defaults below.
+    Http::fake($stubs + [
         'usms.uz/api/v1/send' => Http::response(['id' => '1001', 'parts' => 1, 'price' => 160, 'status' => 'sent']),
         'usms.uz/api/v1/balance' => Http::response(['balance' => 100000]),
-        ...$stubs,
+        'usms.uz/api/v1/status/*' => Http::response(['id' => '1001', 'status' => 'delivered', 'status_note' => 'DELIVRD']),
     ]);
 }
 

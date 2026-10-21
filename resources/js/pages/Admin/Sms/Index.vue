@@ -15,6 +15,7 @@ import {
     formatNumber,
     formatPhone,
 } from '@/lib/format';
+import { sync } from '@/routes/admin/sms';
 import type { Paginated, SmsMessage } from '@/types';
 
 defineProps<{
@@ -26,18 +27,22 @@ defineProps<{
 }>();
 
 const statusTone = {
-    sent: 'success',
+    delivered: 'success',
+    sent: 'neutral',
     pending: 'warning',
     failed: 'danger',
 } as const;
 
-const refreshingBalance = ref(false);
+const refreshing = ref(false);
 
-function refreshBalance(): void {
-    router.reload({
-        only: ['balance'],
-        onStart: () => (refreshingBalance.value = true),
-        onFinish: () => (refreshingBalance.value = false),
+/**
+ * Asks USMS which messages reached the phone; the page then reloads with the new balance too.
+ */
+function refresh(): void {
+    router.visit(sync(), {
+        preserveScroll: true,
+        onStart: () => (refreshing.value = true),
+        onFinish: () => (refreshing.value = false),
     });
 }
 </script>
@@ -53,10 +58,10 @@ function refreshBalance(): void {
             <AppButton
                 variant="secondary"
                 icon="refresh"
-                :loading="refreshingBalance"
-                @click="refreshBalance"
+                :loading="refreshing"
+                @click="refresh"
             >
-                Balansni yangilash
+                Holat va balansni yangilash
             </AppButton>
         </template>
     </PageHeader>

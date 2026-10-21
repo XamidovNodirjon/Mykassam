@@ -9,17 +9,18 @@ use Illuminate\Database\Seeder;
 class AdminSeeder extends Seeder
 {
     /**
-     * Default administrator: login "admin", password "admin123".
+     * Default administrator: login "developer", password "password". Change the password after
+     * the first sign-in on a live server.
      */
     public function run(): void
     {
         User::query()->updateOrCreate(
-            ['login' => 'admin'],
+            ['login' => 'developer'],
             [
-                'first_name' => 'Admin',
-                'last_name' => 'Tizim',
+                'first_name' => 'Developer',
+                'last_name' => null,
                 'phone' => null,
-                'password' => 'admin123',
+                'password' => 'password',
                 'role' => UserRole::Admin,
                 'is_active' => true,
             ],

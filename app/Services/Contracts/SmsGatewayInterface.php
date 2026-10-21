@@ -2,6 +2,7 @@
 
 namespace App\Services\Contracts;
 
+use App\DTOs\SmsDeliveryReport;
 use App\Enums\SmsPurpose;
 use App\Exceptions\SmsGatewayException;
 
@@ -17,6 +18,13 @@ interface SmsGatewayInterface
      * @throws SmsGatewayException
      */
     public function send(string $phone, SmsPurpose $purpose, array $params, string $idempotencyKey): ?string;
+
+    /**
+     * Delivery state of a message accepted earlier, looked up by the id send() returned.
+     *
+     * @throws SmsGatewayException
+     */
+    public function deliveryReport(string $providerMessageId): SmsDeliveryReport;
 
     /**
      * Account balance in UZS, or null when the driver has no balance.

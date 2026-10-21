@@ -219,7 +219,7 @@ export type SmsMessage = {
     id: number;
     phone: string;
     purpose_label: string;
-    status: 'pending' | 'sent' | 'failed';
+    status: 'pending' | 'sent' | 'delivered' | 'failed';
     status_label: string;
     error: string | null;
     created_at: string;
