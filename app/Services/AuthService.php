@@ -50,11 +50,21 @@ class AuthService
     }
 
     /**
+     * Confirm the SMS code of the phone being registered; the account is created in the next step.
+     *
      * @throws ValidationException When the SMS code is wrong or expired.
+     */
+    public function confirmRegistrationPhone(string $phone, string $code): void
+    {
+        $this->verificationCodes->confirm($phone, SmsPurpose::Registration, $code);
+    }
+
+    /**
+     * @throws ValidationException When the phone was not confirmed by SMS in this session.
      */
     public function registerOwner(RegisterOwnerData $data): User
     {
-        $this->verificationCodes->verify($data->phone, SmsPurpose::Registration, $data->code);
+        $this->verificationCodes->consumeConfirmation($data->phone, SmsPurpose::Registration);
 
         $user = $this->users->create([
             'first_name' => $data->firstName,

@@ -26,7 +26,6 @@ class RegisterOwnerRequest extends FormRequest
         return [
             'first_name' => ['required', 'string', 'max:100'],
             'phone' => ['required', 'string', 'regex:'.PhoneNumber::PATTERN, Rule::unique('users', 'login')],
-            'code' => ['required', 'digits:'.config('sms.verification.length')],
             'password' => ['required', 'string', Password::defaults()],
         ];
     }

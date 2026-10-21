@@ -16,6 +16,11 @@ use Illuminate\Validation\ValidationException;
  */
 class VerificationCodeService
 {
+    /**
+     * Seconds a confirmed phone stays usable for finishing the sign-up.
+     */
+    public const CONFIRMATION_TTL = 900;
+
     public function __construct(
         private SmsService $sms,
         #[Config('sms.verification.length')] private int $length,
@@ -99,6 +104,43 @@ class VerificationCodeService
                 ? "Kod noto'g'ri. Qolgan urinishlar: {$attemptsLeft}."
                 : "Urinishlar tugadi. Yangi kod so'rang.",
         ]);
+    }
+
+    /**
+     * Check the code and remember in the session that this visitor owns the phone, so the next
+     * step (e.g. name and password) can follow without the code.
+     *
+     * @throws ValidationException
+     */
+    public function confirm(string $phone, SmsPurpose $purpose, string $code): void
+    {
+        $this->verify($phone, $purpose, $code);
+
+        session()->put($this->confirmationKey($purpose), [
+            'phone' => $phone,
+            'expires_at' => now()->addSeconds(self::CONFIRMATION_TTL)->getTimestamp(),
+        ]);
+    }
+
+    /**
+     * Use up the confirmation made by confirm().
+     *
+     * @throws ValidationException When the phone was not confirmed in this session or it expired.
+     */
+    public function consumeConfirmation(string $phone, SmsPurpose $purpose): void
+    {
+        $confirmation = session()->pull($this->confirmationKey($purpose));
+
+        if (($confirmation['phone'] ?? null) !== $phone || ($confirmation['expires_at'] ?? 0) < now()->getTimestamp()) {
+            throw ValidationException::withMessages([
+                'phone' => "Telefon raqam tasdiqlanmagan yoki vaqt tugagan. Kodni qaytadan so'rang.",
+            ]);
+        }
+    }
+
+    private function confirmationKey(SmsPurpose $purpose): string
+    {
+        return "verified-phone.{$purpose->value}";
     }
 
     private function generateCode(): string

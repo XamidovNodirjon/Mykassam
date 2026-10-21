@@ -58,5 +58,15 @@ interface UserRepositoryInterface
      */
     public function summary(int $onlineWithinSeconds): array;
 
+    /**
+     * Delete an owner with everything in their shops: sales, debts, customers, products and sellers.
+     */
+    public function deleteOwnerWithShops(User $owner): void;
+
+    /**
+     * Delete a seller together with the sales they made.
+     */
+    public function deleteSellerWithSales(User $seller): void;
+
     public function countSellersOfShop(Shop $shop): int;
 }

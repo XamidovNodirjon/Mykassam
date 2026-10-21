@@ -20,6 +20,9 @@ Route::middleware('guest')->group(function (): void {
     Route::post('register', [RegisteredOwnerController::class, 'store'])
         ->middleware('throttle:login')
         ->name('register.store');
+    Route::post('register/verify', [RegisteredOwnerController::class, 'verify'])
+        ->middleware('throttle:login')
+        ->name('register.verify');
     Route::post('register/code', [VerificationCodeController::class, 'registration'])
         ->middleware('throttle:sms')
         ->name('register.code');
@@ -41,7 +44,7 @@ Route::middleware(['auth', 'active'])->group(function (): void {
 
         Route::resource('shop-types', Admin\ShopTypeController::class)->only(['index', 'store', 'update', 'destroy']);
 
-        Route::get('users', [Admin\UserController::class, 'index'])->name('users.index');
+        Route::resource('users', Admin\UserController::class)->only(['index', 'update', 'destroy']);
 
         Route::get('owners', [Admin\OwnerController::class, 'index'])->name('owners.index');
         Route::patch('owners/{owner}/status', [Admin\OwnerController::class, 'toggleStatus'])->name('owners.status');

@@ -9,7 +9,6 @@ final readonly class RegisterOwnerData
     public function __construct(
         public string $firstName,
         public string $phone,
-        public string $code,
         public string $password,
     ) {}
 
@@ -18,7 +17,6 @@ final readonly class RegisterOwnerData
         return new self(
             firstName: $request->string('first_name')->trim()->toString(),
             phone: $request->string('phone')->toString(),
-            code: $request->string('code')->toString(),
             password: $request->string('password')->toString(),
         );
     }

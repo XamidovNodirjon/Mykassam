@@ -3,6 +3,9 @@
 namespace App\Repositories\Eloquent;
 
 use App\Enums\UserRole;
+use App\Models\Customer;
+use App\Models\Debt;
+use App\Models\Sale;
 use App\Models\Shop;
 use App\Models\User;
 use App\Repositories\Contracts\UserRepositoryInterface;
@@ -110,6 +113,33 @@ class UserRepository implements UserRepositoryInterface
             ->orderByDesc('id')
             ->paginate($perPage)
             ->withQueryString();
+    }
+
+    public function deleteOwnerWithShops(User $owner): void
+    {
+        DB::transaction(function () use ($owner): void {
+            $shopIds = $owner->shops()->pluck('id');
+            $userIds = User::query()->whereIn('shop_id', $shopIds)->pluck('id')->push($owner->id);
+
+            // Rows that block deleting a shop go first; the rest cascades with it.
+            Sale::query()->whereIn('shop_id', $shopIds)->delete();
+            Debt::query()->whereIn('shop_id', $shopIds)->delete();
+            Customer::query()->whereIn('shop_id', $shopIds)->delete();
+            Shop::query()->whereKey($shopIds)->delete();
+
+            DB::table('sessions')->whereIn('user_id', $userIds)->delete();
+            $owner->delete();
+        });
+    }
+
+    public function deleteSellerWithSales(User $seller): void
+    {
+        DB::transaction(function () use ($seller): void {
+            Sale::query()->where('seller_id', $seller->id)->delete();
+
+            DB::table('sessions')->where('user_id', $seller->id)->delete();
+            $seller->delete();
+        });
     }
 
     public function summary(int $onlineWithinSeconds): array

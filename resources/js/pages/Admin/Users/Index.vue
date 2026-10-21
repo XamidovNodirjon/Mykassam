@@ -1,17 +1,26 @@
 <script setup lang="ts">
-import { Head, router } from '@inertiajs/vue3';
+import { Head, router, useForm } from '@inertiajs/vue3';
+import { ref } from 'vue';
+import AppIcon from '@/components/AppIcon.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import StatCard from '@/components/StatCard.vue';
+import AppButton from '@/components/ui/AppButton.vue';
+import AppModal from '@/components/ui/AppModal.vue';
 import AppPagination from '@/components/ui/AppPagination.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
+import PhoneField from '@/components/ui/PhoneField.vue';
 import SearchInput from '@/components/ui/SearchInput.vue';
 import StatusBadge from '@/components/ui/StatusBadge.vue';
+import TextField from '@/components/ui/TextField.vue';
+import ToggleField from '@/components/ui/ToggleField.vue';
+import { useConfirm } from '@/composables/useConfirm';
 import {
     formatDateTime,
     formatNumber,
     formatPhone,
     formatShortDate,
 } from '@/lib/format';
+import { destroy, update } from '@/routes/admin/users';
 import type { Paginated, User, UserRole } from '@/types';
 
 const props = defineProps<{
@@ -47,6 +56,62 @@ function isOnline(user: User): boolean {
         user.last_seen_at != null &&
         Date.now() - Date.parse(user.last_seen_at) < onlineWithinMs
     );
+}
+
+const confirm = useConfirm();
+const editing = ref<User | null>(null);
+const editOpen = ref(false);
+
+const form = useForm({
+    first_name: '',
+    last_name: '',
+    phone: '' as string | null,
+    login: '',
+    password: '',
+    is_active: true,
+});
+
+function edit(user: User): void {
+    editing.value = user;
+    form.defaults({
+        first_name: user.first_name,
+        last_name: user.last_name ?? '',
+        phone: user.phone ?? '',
+        login: user.login ?? '',
+        password: '',
+        is_active: user.is_active ?? true,
+    });
+    form.reset();
+    form.clearErrors();
+    editOpen.value = true;
+}
+
+function save(): void {
+    if (editing.value === null) {
+        return;
+    }
+
+    form.submit(update(editing.value.id), {
+        preserveScroll: true,
+        onSuccess: () => (editOpen.value = false),
+        onFinish: () => form.reset('password'),
+    });
+}
+
+async function remove(user: User): Promise<void> {
+    const confirmed = await confirm({
+        title: "Foydalanuvchini o'chirish",
+        message:
+            user.role === 'owner'
+                ? `${user.full_name} va uning ${user.shops_count ?? 0} ta do'koni butunlay o'chiriladi: savdolar, mahsulotlar, mijozlar, qarzlar va sotuvchilar. Bu amalni qaytarib bo'lmaydi.`
+                : `${user.full_name} va uning ${user.sales_count ?? 0} ta savdosi butunlay o'chiriladi. Bu amalni qaytarib bo'lmaydi.`,
+        confirmText: "O'chirish",
+        danger: true,
+    });
+
+    if (confirmed) {
+        router.visit(destroy(user.id), { preserveScroll: true });
+    }
 }
 
 function selectRole(role: UserRole | null): void {
@@ -218,10 +283,79 @@ function selectRole(role: UserRole | null): void {
                     </p>
                 </div>
             </div>
+            <div class="flex gap-2 pl-13 sm:pl-0">
+                <AppButton
+                    variant="secondary"
+                    size="sm"
+                    icon="pencil"
+                    @click="edit(user)"
+                >
+                    Tahrirlash
+                </AppButton>
+                <button
+                    v-if="user.role !== 'admin'"
+                    type="button"
+                    class="flex size-9 items-center justify-center rounded-full text-ink-muted transition hover:bg-danger-soft hover:text-danger"
+                    :aria-label="`${user.full_name}ni o'chirish`"
+                    @click="remove(user)"
+                >
+                    <AppIcon name="trash" :size="18" />
+                </button>
+            </div>
         </li>
     </ul>
 
     <div class="mt-4">
         <AppPagination :paginator="users" />
     </div>
+
+    <AppModal v-model:open="editOpen" title="Foydalanuvchini tahrirlash">
+        <form class="flex flex-col gap-4" @submit.prevent="save">
+            <div class="grid gap-4 sm:grid-cols-2">
+                <TextField
+                    v-model="form.first_name"
+                    label="Ism"
+                    :error="form.errors.first_name"
+                />
+                <TextField
+                    v-model="form.last_name"
+                    label="Familiya"
+                    :error="form.errors.last_name"
+                />
+            </div>
+            <PhoneField
+                v-model="form.phone"
+                :hint="
+                    editing?.role === 'owner'
+                        ? 'Do\'kon egasi shu raqam bilan tizimga kiradi'
+                        : undefined
+                "
+                :error="form.errors.phone"
+            />
+            <TextField
+                v-if="editing?.role !== 'owner'"
+                v-model="form.login"
+                label="Login"
+                autocomplete="off"
+                :error="form.errors.login"
+            />
+            <TextField
+                v-model="form.password"
+                type="password"
+                label="Yangi parol"
+                hint="Bo'sh qoldirilsa, parol o'zgarmaydi. Kamida 6 ta belgi."
+                autocomplete="new-password"
+                :error="form.errors.password"
+            />
+            <ToggleField
+                v-if="editing?.role !== 'admin'"
+                v-model="form.is_active"
+                label="Faol"
+                description="O'chirilsa, foydalanuvchi tizimga kira olmaydi"
+            />
+            <AppButton type="submit" size="lg" block :loading="form.processing">
+                Saqlash
+            </AppButton>
+        </form>
+    </AppModal>
 </template>
