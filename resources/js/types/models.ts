@@ -222,7 +222,6 @@ export type SmsMessage = {
     status: 'pending' | 'sent' | 'failed';
     status_label: string;
     error: string | null;
-    can_resend: boolean;
     created_at: string;
 };
 
